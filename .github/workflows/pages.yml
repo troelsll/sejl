@@ -1,7 +1,7 @@
 name: Deploy til GitHub Pages
 on:
   push:
-    branches: [main]
+    branches: [main, claude/trusting-tesla-bcydlw]
   workflow_dispatch:
 permissions:
   contents: read
