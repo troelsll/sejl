@@ -1,0 +1,8 @@
+# Render Blueprint: gratis webservice med SQLite-database (seed-data lægges ind ved første start).
+# Gratis plan har flygtigt disk: data nulstilles ved redeploy/genstart - fint til test.
+services:
+  - type: web
+    name: kapsejladsapp
+    runtime: docker
+    plan: free
+    healthCheckPath: /

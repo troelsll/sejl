@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../data/kapsejlads.sqlite"
+}
+
+model RaceEvent {
+  id        String      @id
+  name      String
+  date      String
+  status    String
+  createdAt String
+  updatedAt String
+  starts    RaceStart[]
+}
+
+model RaceStart {
+  id                 String         @id
+  eventId            String
+  name               String
+  scheduledStartTime String
+  actualStartTime    String?
+  procedureType      String
+  distanceNm         Float?
+  status             String
+  countdownTargetTime String?
+  countdownRunning   Boolean        @default(false)
+  countdownStartedAt String?
+  warningFlagType    String         @default("class")
+  warningFlagNumber  Int?
+  warningFlagId      String         @default("class-a")
+  manualSignalFlagsJson String      @default("[]")
+  event              RaceEvent      @relation(fields: [eventId], references: [id])
+  boats              Boat[]
+  finishes           FinishRecord[]
+}
+
+model Boat {
+  id            String          @id
+  startId       String
+  boatName      String
+  sailNumber    String
+  boatType      String
+  skipper       String
+  club          String
+  handicap      Float?
+  certificateId String?
+  source        String
+  start         RaceStart       @relation(fields: [startId], references: [id])
+  certificate   Certificate?
+  finishes      FinishRecord[]
+}
+
+model Certificate {
+  id                String  @id
+  boatId            String  @unique
+  certificateNumber String?
+  validUntil        String?
+  gph               Float?
+  tcc               Float?
+  tacil             Float?
+  tacim             Float?
+  tacih             Float?
+  taudl             Float?
+  taudm             Float?
+  taudh             Float?
+  rawJson           String
+  sourceUrl         String?
+  fetchedAt         String
+  boat              Boat    @relation(fields: [boatId], references: [id])
+}
+
+model FinishRecord {
+  id          String @id
+  startId     String
+  boatId      String
+  finishedAt  String
+  recordedAt  String
+  method      String
+  notes       String?
+  isDeleted   Boolean @default(false)
+  start       RaceStart @relation(fields: [startId], references: [id])
+  boat        Boat @relation(fields: [boatId], references: [id])
+}
+
+model EventLog {
+  id        String @id
+  eventId   String?
+  startId   String?
+  boatId    String?
+  type      String
+  message   String
+  metadata  String
+  createdAt String
+}
+
+model Settings {
+  id             String @id
+  signalVolume   Float
+  signalSound    String @default("electronic")
+  partyModeEnabled Boolean @default(true)
+  procedureType  String
+  audioOutputId  String?
+  customWarningFlagsJson String @default("[]")
+  updatedAt      String
+}

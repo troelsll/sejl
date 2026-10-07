@@ -1,0 +1,26 @@
+{
+  "name": "kapsejladsapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lokal-first MVP til afvikling af kapsejlads, starter, målgang og foreløbige DH-resultater.",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node server/index.mjs",
+    "seed": "node server/seed.mjs",
+    "test": "node tests/run-tests.mjs",
+    "test:browser": "node tests/browser-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {},
+  "plannedDependencies": {
+    "@prisma/client": "latest",
+    "express": "latest",
+    "prisma": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  }
+}
