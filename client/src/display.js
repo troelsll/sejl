@@ -133,6 +133,9 @@ function renderFlagFace(flag) {
   }
   if (flag.type === "race") {
     const signal = raceSignalById(flag.code);
+    if (signal?.stack) {
+      return `<div class="signal-flag-stack" aria-label="${escapeHtml(signal.name)}">${signal.stack.map((cssClass) => `<div class="signal-flag race-signal-flag ${cssClass}"></div>`).join("")}</div>`;
+    }
     return `<div class="${signalFlagClass(flag)} ${escapeHtml(signal?.cssClass ?? "")}" aria-label="${escapeHtml(signal?.name ?? flag.title)}"></div>`;
   }
   return `<div class="${signalFlagClass(flag)}" aria-label="${escapeHtml(flag.title)}"></div>`;

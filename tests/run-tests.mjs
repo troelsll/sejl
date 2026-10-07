@@ -28,9 +28,10 @@ test("dommersignaler indeholder de manuelle startside-signaler", () => {
   const ids = RACE_SIGNAL_FLAGS.map((flag) => flag.id);
   assert.ok(ids.includes("general-recall"));
   assert.ok(ids.includes("individual-recall"));
-  assert.ok(ids.includes("course-side"));
+  assert.ok(ids.includes("red"));
+  assert.ok(ids.includes("n-a"));
   assert.ok(ids.includes("ap"));
-  assert.equal(raceSignalById("h").name, "H - fremtidige signaler i land");
+  assert.deepEqual(raceSignalById("n-h").stack, ["signal-n", "signal-h"]);
 });
 
 test("Dansk Sejlunion-klasseflag er tilgængelige som klassestandere", () => {
