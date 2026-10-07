@@ -7,7 +7,8 @@ export const FIVE_MINUTE_PROCEDURE = {
       offsetSeconds: 5 * 60,
       phase: "Varselssignal",
       signalName: "Varsel",
-      soundPattern: "long",
+      soundPattern: "single",
+      soundLabel: "1 lydsignal",
       description: "5 minutter til start",
       flagActions: [{ flag: "class", action: "up", label: "Klasseflag op" }]
     },
@@ -15,7 +16,8 @@ export const FIVE_MINUTE_PROCEDURE = {
       offsetSeconds: 4 * 60,
       phase: "Klarsignal",
       signalName: "Klar",
-      soundPattern: "long",
+      soundPattern: "single",
+      soundLabel: "1 lydsignal",
       description: "4 minutter til start",
       flagActions: [{ flag: "prep", action: "up", label: "P-flag op" }]
     },
@@ -24,6 +26,7 @@ export const FIVE_MINUTE_PROCEDURE = {
       phase: "Et-minut-signal",
       signalName: "Et minut",
       soundPattern: "long",
+      soundLabel: "1 langt lydsignal",
       description: "1 minut til start",
       flagActions: [{ flag: "prep", action: "down", label: "P-flag ned" }]
     },
@@ -31,7 +34,8 @@ export const FIVE_MINUTE_PROCEDURE = {
       offsetSeconds: 0,
       phase: "Startsignal",
       signalName: "Start",
-      soundPattern: "long",
+      soundPattern: "single",
+      soundLabel: "1 lydsignal",
       description: "Start",
       flagActions: [{ flag: "class", action: "down", label: "Klasseflag ned" }]
     }

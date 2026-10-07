@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { buildResults, calculateCorrectedSeconds, secondsBetween } from "../shared/calculations.mjs";
-import { formatDuration, getActiveFlags, getProcedureState } from "../shared/startProcedure.mjs";
+import { formatDuration, getActiveFlags, getProcedure, getProcedureState } from "../shared/startProcedure.mjs";
 import { DS_DINGHY_CAT_CLASS_FLAGS, DS_KEELBOAT_CLASS_FLAGS, RACE_SIGNAL_FLAGS, allClassFlags, raceSignalById } from "../shared/flags.mjs";
 import { parseCertificateHtml } from "../server/websejlerAdapter.mjs";
 
@@ -139,6 +139,11 @@ test("WebSejler-parser håndterer engelsk certifikatformat", () => {
   assert.equal(parsed.certificate.validUntil, "31-12-2026");
   assert.equal(parsed.certificate.tcc, 1.182);
   assert.equal(parsed.certificate.taudh, 597.6);
+});
+
+test("lydsignaler følger startskemaet: 1 lydsignal, og 1 langt ved et-minut-signalet", () => {
+  const steps = getProcedure("five-minute").steps;
+  assert.deepEqual(steps.map((step) => [step.offsetSeconds, step.soundPattern]), [[300, "single"], [240, "single"], [60, "long"], [0, "single"]]);
 });
 
 for (const { name, fn } of tests) {

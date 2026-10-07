@@ -393,7 +393,7 @@ function renderStartProcedure() {
           <div class="step ${step.offsetSeconds >= seconds ? "done" : ""}">
             <strong>${formatDuration(step.offsetSeconds)}</strong>
             <span>${escapeHtml(step.phase)}</span>
-            <small>${(step.flagActions ?? []).map((action) => escapeHtml(action.label)).join(" · ")}</small>
+            <small>${[...(step.flagActions ?? []).map((action) => action.label), step.soundLabel].filter(Boolean).map(escapeHtml).join(" · ")}</small>
           </div>
         `).join("")}
       </div>
@@ -881,7 +881,7 @@ function bindStartButtons() {
     await loadAll();
     render();
   });
-  document.querySelector("#soundTest")?.addEventListener("click", () => playSignal("long"));
+  document.querySelector("#soundTest")?.addEventListener("click", () => playSignal("single"));
   document.querySelector("#openStartDisplay")?.addEventListener("click", () => {
     if (!state.selectedStartId) return;
     window.open(`/display.html?startId=${encodeURIComponent(state.selectedStartId)}`, "_blank", "noopener,noreferrer");
@@ -1118,7 +1118,7 @@ function bindSettings() {
     await loadStartData();
     render();
   });
-  document.querySelector("#settingsSoundTest")?.addEventListener("click", () => playSignal("long"));
+  document.querySelector("#settingsSoundTest")?.addEventListener("click", () => playSignal("single"));
   document.querySelector("#customFlagForm")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.target;
@@ -1212,13 +1212,18 @@ function playSignal(pattern) {
   if (sound === "foghorn") playFoghorn(context, volume, pattern);
   else if (sound === "bell") playBell(context, volume, pattern);
   else playElectronicSignal(context, volume, pattern);
-  setTimeout(() => context.close?.(), pattern === "short" ? 1200 : 2600);
+  setTimeout(() => context.close?.(), signalSeconds(pattern, { short: 0.8, single: 1.6, long: 3.5 }) * 1000 + 600);
+}
+
+// Lydlængder: short = kort klik (fx målgang), single = "1 lydsignal", long = "1 langt lydsignal"
+function signalSeconds(pattern, lengths) {
+  return lengths[pattern] ?? lengths.single;
 }
 
 function playElectronicSignal(context, volume, pattern) {
   const oscillator = context.createOscillator();
   const gain = context.createGain();
-  const duration = pattern === "short" ? 0.18 : 0.8;
+  const duration = signalSeconds(pattern, { short: 0.18, single: 0.8, long: 2.5 });
   oscillator.frequency.value = 440;
   oscillator.type = "sine";
   gain.gain.value = volume;
@@ -1228,7 +1233,7 @@ function playElectronicSignal(context, volume, pattern) {
 }
 
 function playFoghorn(context, volume, pattern) {
-  const duration = pattern === "short" ? 0.75 : 1.9;
+  const duration = signalSeconds(pattern, { short: 0.75, single: 1.2, long: 3 });
   const start = context.currentTime;
   const master = context.createGain();
   master.gain.setValueAtTime(0.001, start);
@@ -1248,7 +1253,7 @@ function playFoghorn(context, volume, pattern) {
 }
 
 function playBell(context, volume, pattern) {
-  const duration = pattern === "short" ? 0.7 : 1.25;
+  const duration = signalSeconds(pattern, { short: 0.7, single: 1.25, long: 3 });
   const start = context.currentTime;
   [660, 990, 1320].forEach((frequency, index) => {
     const oscillator = context.createOscillator();
