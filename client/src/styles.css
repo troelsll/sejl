@@ -412,18 +412,20 @@ th {
 }
 
 .number-flag {
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-  border-radius: 4px 0 0 4px;
+  /* Talstander: aflang vimpel med afskåret, flad spids */
+  clip-path: polygon(0 0, 100% 36%, 100% 64%, 0 100%);
+  border-radius: 0;
+  border: 0;
 }
 
 .number-1 {
   background:
-    radial-gradient(circle at 42% 50%, #b42318 0 22%, transparent 23%),
+    radial-gradient(circle at 24% 50%, #b42318 0 17%, transparent 18%),
     #fff;
 }
 
 .number-2 {
-  background: radial-gradient(circle at 42% 50%, #fff 0 24%, transparent 25%), #155eef;
+  background: radial-gradient(circle at 24% 50%, #fff 0 17%, transparent 18%), #155eef;
 }
 
 .number-3 {
