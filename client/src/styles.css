@@ -412,30 +412,32 @@ th {
 }
 
 .number-flag {
-  /* Talstander: aflang vimpel med afskåret, flad spids */
-  clip-path: polygon(0 0, 100% 36%, 100% 64%, 0 100%);
+  /* Talstander: aflang vimpel med afskåret, flad spids (efter Dansk Sejlunions oversigt) */
+  clip-path: polygon(0 0, 100% 30%, 100% 70%, 0 100%);
   border-radius: 0;
   border: 0;
+  min-width: 11rem;
+  min-height: 4.5rem;
 }
 
 .number-1 {
   background:
-    radial-gradient(circle at 24% 50%, #b42318 0 17%, transparent 18%),
+    radial-gradient(circle closest-side at 25% 50%, #b42318 0 72%, transparent 73%),
     #fff;
 }
 
 .number-2 {
-  background: radial-gradient(circle at 24% 50%, #fff 0 17%, transparent 18%), #155eef;
+  background: radial-gradient(circle closest-side at 25% 50%, #fff 0 72%, transparent 73%), #155eef;
 }
 
 .number-3 {
-  background: linear-gradient(90deg, #b42318 0 33%, #fff 33% 66%, #155eef 66% 100%);
+  background: linear-gradient(90deg, #b42318 0 33.333%, #fff 33.333% 66.667%, #155eef 66.667% 100%);
 }
 
 .number-4 {
   background:
-    linear-gradient(90deg, transparent 0 38%, #fff 38% 54%, transparent 54% 100%),
-    linear-gradient(0deg, transparent 0 38%, #fff 38% 54%, transparent 54% 100%),
+    linear-gradient(90deg, transparent 0 34%, #fff 34% 46%, transparent 46% 100%),
+    linear-gradient(0deg, transparent 0 42%, #fff 42% 58%, transparent 58% 100%),
     #b42318;
 }
 
@@ -453,15 +455,14 @@ th {
 
 .number-8 {
   background:
-    linear-gradient(90deg, transparent 0 42%, #b42318 42% 58%, transparent 58% 100%),
+    linear-gradient(90deg, transparent 0 34%, #b42318 34% 46%, transparent 46% 100%),
     linear-gradient(0deg, transparent 0 42%, #b42318 42% 58%, transparent 58% 100%),
     #fff;
 }
 
 .number-9 {
-  background:
-    linear-gradient(90deg, transparent 0 50%, #000 50% 100%),
-    linear-gradient(0deg, #b42318 0 50%, #fff 50% 100%);
+  /* Delt i fire: hvid/sort foroven, rød/gul forneden */
+  background: conic-gradient(from 270deg at 50% 50%, #fff 0 25%, #000 0 50%, #ffcd00 0 75%, #b42318 0 100%);
 }
 
 .race-signal-flag {
@@ -562,8 +563,9 @@ th {
 }
 
 .signal-ap {
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
-  background: repeating-linear-gradient(90deg, #b42318 0 18%, #fff 18% 32%);
+  /* Svarstander: aflang vimpel med fem lodrette striber */
+  clip-path: polygon(0 0, 100% 30%, 100% 70%, 0 100%);
+  background: linear-gradient(90deg, #b42318 0 20%, #fff 20% 40%, #b42318 40% 60%, #fff 60% 80%, #b42318 80% 100%);
 }
 
 .signal-a {
