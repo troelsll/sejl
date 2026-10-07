@@ -1,3 +1,4 @@
+import "./db-node.mjs";
 import { initDb, seedData } from "./database.mjs";
 
 initDb();

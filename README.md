@@ -30,20 +30,22 @@ node server/index.mjs
 
 Databasen oprettes automatisk som `data/kapsejlads.sqlite`, og seed data med dagens løb og 8 både lægges ind første gang.
 
-## Test online med gemte data (gratis)
+## Test online via GitHub Pages (ingen server)
 
-Appen kører på Render (gratis) og gemmer data i SQLite. Fordi Renders gratis plan har flygtigt disk, kopierer **Litestream** løbende databasen til **Cloudflare R2** (gratis, intet kort), og henter den igen ved opstart.
+`npm run build:pages` bygger en statisk version i `dist/`, hvor SQLite kører i browseren (sql.js/WebAssembly) med præcis samme API- og databasekode som serveren. Hver tester får sin egen testdatabase med seed-data, gemt i browserens `localStorage`: data overlever reload og deles mellem faner i samme browser (fx ekstern startskærm), men deles ikke mellem personer eller enheder. Tilføj `?reset` til URL'en for at nulstille til seed-data.
 
-1. **Cloudflare R2:** opret konto på cloudflare.com → *R2 Object Storage* → opret bucket (fx `kapsejlads-data`) → *Manage API tokens* → opret token med *Object Read & Write*. Notér Access Key ID, Secret Access Key og S3-endpoint (`https://<account-id>.r2.cloudflarestorage.com`).
-2. **Render:** render.com → *New → Blueprint* → vælg dette repo. Udfyld de fire variabler:
-   - `LITESTREAM_BUCKET` = bucket-navn
-   - `LITESTREAM_ENDPOINT` = S3-endpoint
-   - `LITESTREAM_ACCESS_KEY_ID` / `LITESTREAM_SECRET_ACCESS_KEY` = fra tokenet
-3. Del den URL Render giver. Gratis-tjenesten sover efter ~15 min uden trafik og bruger ca. et minut på at vågne, men data bevares.
+Opsætning (én gang): GitHub → *Settings → Pages → Source: GitHub Actions*. Workflowet `.github/workflows/pages.yml` deployer ved push til `main` og kan også startes manuelt. Adressen bliver `https://<bruger>.github.io/sejl/`.
 
-Uden `LITESTREAM_*` variabler kører appen uden persistens. Andre variabler: `PORT` (default 4173), `DATA_DIR` (default `./data`).
+Begrænsninger i Pages-versionen: WebSejler-opslag virker sandsynligvis ikke pga. CORS (brug manuel indtastning), og data er lokale pr. browser.
 
-Docker lokalt: `docker build -t kapsejlads . && docker run -p 8080:8080 -v kapsejlads-data:/data kapsejlads`
+## Delt server (valgfrit)
+
+Hvis testerne skal dele data, kan Node-versionen hostes med `Dockerfile` + `render.yaml` (Render gratis plan). Litestream kopierer SQLite-databasen til Cloudflare R2 (gratis), så data overlever genstart:
+
+1. Cloudflare R2: opret bucket og API-token (Object Read & Write); notér Access Key ID, Secret og S3-endpoint (`https://<account-id>.r2.cloudflarestorage.com`).
+2. Render: *New → Blueprint* → vælg repoet, og udfyld `LITESTREAM_BUCKET`, `LITESTREAM_ENDPOINT`, `LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY`.
+
+Uden `LITESTREAM_*` kører appen uden persistens. Andre variabler: `PORT` (default 4173), `DATA_DIR` (default `./data`).
 
 ## Deling (ZIP)
 

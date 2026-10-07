@@ -3,32 +3,9 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { extname, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  allEvents,
-  boatsForStart,
-  createBoat,
-  createEvent,
-  createFinish,
-  deleteEvent,
-  finishNextBoat,
-  finishRecordsForStart,
-  getEvent,
-  getSettings,
-  getStart,
-  initDb,
-  logs,
-  reorderQueue,
-  seedIfEmpty,
-  undoLastFinish,
-  updateBoat,
-  updateFinish,
-  updateSettings,
-  updateStart,
-  updateStartCountdown
-} from "./database.mjs";
-import { lookupWebSejler } from "./websejlerAdapter.mjs";
-import { buildResults } from "../shared/calculations.mjs";
-import { getProcedure } from "../shared/startProcedure.mjs";
+import "./db-node.mjs";
+import { initDb, seedIfEmpty } from "./database.mjs";
+import { handleApi } from "./api.mjs";
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const clientDir = join(rootDir, "client");
@@ -40,7 +17,11 @@ seedIfEmpty();
 const server = createServer(async (request, response) => {
   try {
     if (request.url?.startsWith("/api/")) {
-      await handleApi(request, response);
+      const url = new URL(request.url, `http://${request.headers.host}`);
+      const method = request.method ?? "GET";
+      const body = ["POST", "PUT", "PATCH"].includes(method) ? await readJson(request) : {};
+      const { status, payload } = await handleApi(method, url, body);
+      json(response, status, payload);
       return;
     }
     await serveStatic(request, response);
@@ -52,82 +33,6 @@ const server = createServer(async (request, response) => {
 server.listen(port, () => {
   console.log(`Kapsejladsapp kører på http://localhost:${port}`);
 });
-
-async function handleApi(request, response) {
-  const url = new URL(request.url, `http://${request.headers.host}`);
-  const method = request.method ?? "GET";
-  const body = ["POST", "PUT", "PATCH"].includes(method) ? await readJson(request) : {};
-
-  if (method === "GET" && url.pathname === "/api/events") return json(response, 200, allEvents());
-  if (method === "POST" && url.pathname === "/api/events") return json(response, 201, createEvent(body));
-
-  const eventMatch = url.pathname.match(/^\/api\/events\/([^/]+)$/);
-  if (method === "GET" && eventMatch) {
-    const event = getEvent(eventMatch[1]);
-    return event ? json(response, 200, event) : json(response, 404, { error: "Event ikke fundet" });
-  }
-  if (method === "DELETE" && eventMatch) {
-    const event = deleteEvent(eventMatch[1]);
-    return event ? json(response, 200, event) : json(response, 404, { error: "Event ikke fundet" });
-  }
-
-  const startMatch = url.pathname.match(/^\/api\/starts\/([^/]+)$/);
-  if (method === "PATCH" && startMatch) return json(response, 200, updateStart(startMatch[1], body));
-
-  const countdownMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/countdown$/);
-  if (method === "PATCH" && countdownMatch) return json(response, 200, updateStartCountdown(countdownMatch[1], body));
-
-  const displayStateMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/display-state$/);
-  if (method === "GET" && displayStateMatch) {
-    const start = getStart(displayStateMatch[1]);
-    if (!start) return json(response, 404, { error: "Start ikke fundet" });
-    const event = getEvent(start.eventId);
-    return json(response, 200, {
-      serverTime: new Date().toISOString(),
-      eventName: event?.name ?? "",
-      start,
-      procedure: getProcedure(start.procedureType),
-      customWarningFlags: getSettings().customWarningFlags ?? []
-    });
-  }
-
-  const boatsMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/boats$/);
-  if (method === "GET" && boatsMatch) return json(response, 200, boatsForStart(boatsMatch[1]));
-  if (method === "POST" && boatsMatch) return json(response, 201, createBoat(boatsMatch[1], body));
-
-  const queueMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/queue$/);
-  if (method === "PUT" && queueMatch) return json(response, 200, reorderQueue(queueMatch[1], body.boatIds ?? []));
-
-  const boatMatch = url.pathname.match(/^\/api\/boats\/([^/]+)$/);
-  if (method === "PATCH" && boatMatch) return json(response, 200, updateBoat(boatMatch[1], body));
-
-  const finishNextMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/finish-next$/);
-  if (method === "POST" && finishNextMatch) return json(response, 201, finishNextBoat(finishNextMatch[1], body.finishedAt));
-
-  const finishesMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/finishes$/);
-  if (method === "GET" && finishesMatch) return json(response, 200, finishRecordsForStart(finishesMatch[1]));
-  if (method === "POST" && finishesMatch) return json(response, 201, createFinish(finishesMatch[1], body.boatId, body.finishedAt, body.method ?? "manual"));
-
-  const undoMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/undo-finish$/);
-  if (method === "POST" && undoMatch) return json(response, 200, undoLastFinish(undoMatch[1]));
-
-  const finishMatch = url.pathname.match(/^\/api\/finishes\/([^/]+)$/);
-  if (method === "PATCH" && finishMatch) return json(response, 200, updateFinish(finishMatch[1], body));
-
-  const resultsMatch = url.pathname.match(/^\/api\/starts\/([^/]+)\/results$/);
-  if (method === "GET" && resultsMatch) {
-    const start = getStart(resultsMatch[1]);
-    if (!start) return json(response, 404, { error: "Start ikke fundet" });
-    return json(response, 200, buildResults(start, boatsForStart(start.id), finishRecordsForStart(start.id)));
-  }
-
-  if (method === "POST" && url.pathname === "/api/websejler/lookup") return json(response, 200, await lookupWebSejler(body));
-  if (method === "GET" && url.pathname === "/api/settings") return json(response, 200, getSettings());
-  if (method === "PATCH" && url.pathname === "/api/settings") return json(response, 200, updateSettings(body));
-  if (method === "GET" && url.pathname === "/api/logs") return json(response, 200, logs(Number(url.searchParams.get("limit") ?? 100)));
-
-  json(response, 404, { error: "Endpoint ikke fundet" });
-}
 
 async function serveStatic(request, response) {
   const url = new URL(request.url, `http://${request.headers.host}`);

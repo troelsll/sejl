@@ -1,19 +1,14 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+// Database-laget er miljø-uafhængigt: db injiceres via setDb (node:sqlite på serveren, sql.js i browseren).
+export let db;
 
-const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
-const dataDir = process.env.DATA_DIR ?? join(rootDir, "data");
-const dbPath = join(dataDir, "kapsejlads.sqlite");
+export function setDb(database) {
+  db = database;
+}
 
-mkdirSync(dataDir, { recursive: true });
-
-export const db = new DatabaseSync(dbPath);
-db.exec("PRAGMA foreign_keys = ON");
+const randomUUID = () => globalThis.crypto.randomUUID();
 
 export function initDb() {
+  db.exec("PRAGMA foreign_keys = ON");
   db.exec(`
     CREATE TABLE IF NOT EXISTS race_events (
       id TEXT PRIMARY KEY,

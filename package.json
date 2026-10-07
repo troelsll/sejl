@@ -9,12 +9,12 @@
     "dev": "node server/index.mjs",
     "seed": "node server/seed.mjs",
     "test": "node tests/run-tests.mjs",
-    "test:browser": "node tests/browser-smoke.mjs"
+    "test:browser": "node tests/browser-smoke.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
   },
   "engines": {
     "node": ">=24.0.0"
   },
-  "dependencies": {},
   "plannedDependencies": {
     "@prisma/client": "latest",
     "express": "latest",
@@ -22,5 +22,8 @@
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
+  },
+  "devDependencies": {
+    "sql.js": "^1.14.2"
   }
 }
