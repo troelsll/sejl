@@ -1,0 +1,9 @@
+dbs:
+  - path: ${DATA_DIR}/kapsejlads.sqlite
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: kapsejlads
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: auto
+        force-path-style: true

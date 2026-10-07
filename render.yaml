@@ -1,8 +1,17 @@
-# Render Blueprint: gratis webservice med SQLite-database (seed-data lægges ind ved første start).
-# Gratis plan har flygtigt disk: data nulstilles ved redeploy/genstart - fint til test.
+# Render Blueprint: gratis webservice. SQLite-databasen replikeres til Cloudflare R2 via Litestream,
+# så testdata overlever genstart/redeploy. Udfyld de fire variabler i Render efter oprettelse.
 services:
   - type: web
     name: kapsejladsapp
     runtime: docker
     plan: free
     healthCheckPath: /
+    envVars:
+      - key: LITESTREAM_BUCKET
+        sync: false
+      - key: LITESTREAM_ENDPOINT
+        sync: false
+      - key: LITESTREAM_ACCESS_KEY_ID
+        sync: false
+      - key: LITESTREAM_SECRET_ACCESS_KEY
+        sync: false

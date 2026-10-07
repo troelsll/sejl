@@ -30,13 +30,20 @@ node server/index.mjs
 
 Databasen oprettes automatisk som `data/kapsejlads.sqlite`, og seed data med dagens løb og 8 både lægges ind første gang.
 
-## Test online (deling)
+## Test online med gemte data (gratis)
 
-Appen har en indbygget SQLite-database med seed-data, så alle der åbner den får et færdigt testmiljø.
+Appen kører på Render (gratis) og gemmer data i SQLite. Fordi Renders gratis plan har flygtigt disk, kopierer **Litestream** løbende databasen til **Cloudflare R2** (gratis, intet kort), og henter den igen ved opstart.
 
-- **Render (anbefalet, gratis):** opret en konto på render.com → *New → Blueprint* → vælg dette repo. `render.yaml` og `Dockerfile` sætter alt op, og du får en delbar URL. Gratis plan nulstiller data ved genstart.
-- **Docker:** `docker build -t kapsejlads . && docker run -p 8080:8080 -v kapsejlads-data:/data kapsejlads`
-- Miljøvariabler: `PORT` (default 4173) og `DATA_DIR` (default `./data`).
+1. **Cloudflare R2:** opret konto på cloudflare.com → *R2 Object Storage* → opret bucket (fx `kapsejlads-data`) → *Manage API tokens* → opret token med *Object Read & Write*. Notér Access Key ID, Secret Access Key og S3-endpoint (`https://<account-id>.r2.cloudflarestorage.com`).
+2. **Render:** render.com → *New → Blueprint* → vælg dette repo. Udfyld de fire variabler:
+   - `LITESTREAM_BUCKET` = bucket-navn
+   - `LITESTREAM_ENDPOINT` = S3-endpoint
+   - `LITESTREAM_ACCESS_KEY_ID` / `LITESTREAM_SECRET_ACCESS_KEY` = fra tokenet
+3. Del den URL Render giver. Gratis-tjenesten sover efter ~15 min uden trafik og bruger ca. et minut på at vågne, men data bevares.
+
+Uden `LITESTREAM_*` variabler kører appen uden persistens. Andre variabler: `PORT` (default 4173), `DATA_DIR` (default `./data`).
+
+Docker lokalt: `docker build -t kapsejlads . && docker run -p 8080:8080 -v kapsejlads-data:/data kapsejlads`
 
 ## Deling (ZIP)
 
