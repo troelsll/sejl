@@ -360,6 +360,8 @@ function renderBoats() {
   `;
 }
 
+let manualSignalQueue = Promise.resolve();
+
 function renderStartProcedure() {
   const start = selectedStart();
   const procedure = getProcedure(start?.procedureType);
@@ -434,7 +436,13 @@ function renderManualSignals(start) {
 function renderSignalFlags(flags, emptyText = "Ingen flag oppe") {
   return `
     <div class="signal-flags ${flags.length ? "" : "empty"}">
-      ${flags.map((flag) => `
+      ${flags.map((flag) => flag.type === "race" ? `
+        <button type="button" class="flag-card removable" data-remove-manual-signal="${escapeHtml(flag.id)}" title="Klik for at tage flaget ned">
+          ${renderFlagFace(flag)}
+          <small>${escapeHtml(flag.title)}</small>
+          <small class="remove-hint">Klik for at tage ned</small>
+        </button>
+      ` : `
         <div class="flag-card">
           ${renderFlagFace(flag)}
           <small>${escapeHtml(flag.title)}</small>
@@ -878,17 +886,20 @@ function bindStartButtons() {
     if (!state.selectedStartId) return;
     window.open(`/display.html?startId=${encodeURIComponent(state.selectedStartId)}`, "_blank", "noopener,noreferrer");
   });
-  document.querySelectorAll("[data-toggle-manual-signal]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const start = selectedStart();
-      if (!start) return;
-      const signalId = button.dataset.toggleManualSignal;
-      const activeSignals = new Set(start.manualSignalFlags ?? []);
-      if (activeSignals.has(signalId)) activeSignals.delete(signalId);
-      else activeSignals.add(signalId);
-      await api.patch(`/api/starts/${start.id}`, { manualSignalFlags: [...activeSignals] });
-      await loadAll();
-      render();
+  document.querySelectorAll("[data-toggle-manual-signal], [data-remove-manual-signal]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const signalId = button.dataset.toggleManualSignal ?? button.dataset.removeManualSignal;
+      // Køsæt klik, så hurtige klik ikke overskriver hinanden med forældet state
+      manualSignalQueue = manualSignalQueue.then(async () => {
+        const start = selectedStart();
+        if (!start) return;
+        const activeSignals = new Set(start.manualSignalFlags ?? []);
+        if (activeSignals.has(signalId)) activeSignals.delete(signalId);
+        else activeSignals.add(signalId);
+        await api.patch(`/api/starts/${start.id}`, { manualSignalFlags: [...activeSignals] });
+        await loadAll();
+        render();
+      }).catch((error) => console.error(error));
     });
   });
 }

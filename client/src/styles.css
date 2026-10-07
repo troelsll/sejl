@@ -1048,3 +1048,25 @@ th {
     grid-template-columns: 1fr;
   }
 }
+
+/* Ekstra signaler kan tages ned ved at klikke på dem */
+button.flag-card.removable {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.flag-card.removable .remove-hint {
+  opacity: 0.65;
+  font-size: 0.7rem;
+}
+
+.flag-card.removable:hover .signal-flag,
+.flag-card.removable:focus-visible .signal-flag,
+.flag-card.removable:hover .signal-flag-stack,
+.flag-card.removable:focus-visible .signal-flag-stack {
+  outline: 3px solid #ffcd00;
+  outline-offset: 3px;
+}
