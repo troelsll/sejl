@@ -1,3 +1,5 @@
+import { normalizePrepFlag } from "../shared/startProcedure.mjs";
+
 // Database-laget er miljø-uafhængigt: db injiceres via setDb (node:sqlite på serveren, sql.js i browseren).
 export let db;
 
@@ -113,6 +115,7 @@ export function initDb() {
   ensureColumn("race_starts", "warning_flag_number", "INTEGER");
   ensureColumn("race_starts", "warning_flag_id", "TEXT NOT NULL DEFAULT 'class-a'");
   ensureColumn("race_starts", "manual_signal_flags_json", "TEXT NOT NULL DEFAULT '[]'");
+  ensureColumn("race_starts", "prep_flag", "TEXT NOT NULL DEFAULT 'P'");
   ensureColumn("settings", "signal_sound", "TEXT NOT NULL DEFAULT 'electronic'");
   ensureColumn("settings", "party_mode_enabled", "INTEGER NOT NULL DEFAULT 1");
   ensureColumn("settings", "custom_warning_flags_json", "TEXT NOT NULL DEFAULT '[]'");
@@ -250,7 +253,7 @@ export function updateStart(id, payload) {
   const existing = getStart(id);
   if (!existing) return null;
   db.prepare(
-    "UPDATE race_starts SET name = ?, scheduled_start_time = ?, actual_start_time = ?, procedure_type = ?, distance_nm = ?, status = ?, countdown_target_time = ?, countdown_running = ?, countdown_started_at = ?, warning_flag_type = ?, warning_flag_number = ?, warning_flag_id = ?, manual_signal_flags_json = ? WHERE id = ?"
+    "UPDATE race_starts SET name = ?, scheduled_start_time = ?, actual_start_time = ?, procedure_type = ?, distance_nm = ?, status = ?, countdown_target_time = ?, countdown_running = ?, countdown_started_at = ?, warning_flag_type = ?, warning_flag_number = ?, warning_flag_id = ?, manual_signal_flags_json = ?, prep_flag = ? WHERE id = ?"
   ).run(
     payload.name ?? existing.name,
     payload.scheduledStartTime ?? existing.scheduledStartTime,
@@ -265,6 +268,7 @@ export function updateStart(id, payload) {
     payload.warningFlagNumber === undefined ? existing.warningFlagNumber : normalizeWarningFlagNumber(payload.warningFlagNumber),
     payload.warningFlagId ?? existing.warningFlagId ?? "class-a",
     JSON.stringify(payload.manualSignalFlags === undefined ? existing.manualSignalFlags : normalizeManualSignalFlags(payload.manualSignalFlags)),
+    normalizePrepFlag(payload.prepFlag ?? existing.prepFlag),
     id
   );
   logEvent({ startId: id, type: "start.updated", message: "Start opdateret", metadata: payload });
@@ -513,7 +517,8 @@ function mapStart(row) {
     warningFlagType: row.warning_flag_type ?? "class",
     warningFlagNumber: row.warning_flag_number,
     warningFlagId: row.warning_flag_id ?? "class-a",
-    manualSignalFlags: parseJsonArray(row.manual_signal_flags_json)
+    manualSignalFlags: parseJsonArray(row.manual_signal_flags_json),
+    prepFlag: normalizePrepFlag(row.prep_flag)
   };
 }
 

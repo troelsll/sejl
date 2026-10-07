@@ -19,7 +19,7 @@ export const FIVE_MINUTE_PROCEDURE = {
       soundPattern: "single",
       soundLabel: "1 lydsignal",
       description: "4 minutter til start",
-      flagActions: [{ flag: "prep", action: "up", label: "P-flag op" }]
+      flagActions: [{ flag: "prep", action: "up", label: "Klarsignal op" }]
     },
     {
       offsetSeconds: 60,
@@ -28,7 +28,7 @@ export const FIVE_MINUTE_PROCEDURE = {
       soundPattern: "long",
       soundLabel: "1 langt lydsignal",
       description: "1 minut til start",
-      flagActions: [{ flag: "prep", action: "down", label: "P-flag ned" }]
+      flagActions: [{ flag: "prep", action: "down", label: "Klarsignal ned" }]
     },
     {
       offsetSeconds: 0,
@@ -40,6 +40,38 @@ export const FIVE_MINUTE_PROCEDURE = {
       flagActions: [{ flag: "class", action: "down", label: "Klasseflag ned" }]
     }
   ]
+};
+
+// Opmærksomhedssignal: orange flag op senest 10 min før start (1 lydsignal). Vises som ekstra trin før nedtællingen.
+export const ATTENTION_STEP = {
+  offsetSeconds: 10 * 60,
+  phase: "Opmærksomhedssignal",
+  signalName: "Opmærksomhed",
+  soundPattern: "single",
+  soundLabel: "1 lydsignal",
+  description: "Senest 10 minutter til start",
+  flagActions: [{ flag: "orange", action: "up", label: "Orange flag op (senest)" }]
+};
+
+// Klarsignal: P, I, Z, Z og I eller sort flag
+export const PREP_FLAG_OPTIONS = [
+  { id: "P", label: "P-flag" },
+  { id: "I", label: "I-flag" },
+  { id: "Z", label: "Z-flag" },
+  { id: "ZI", label: "Z og I" },
+  { id: "BLACK", label: "Sort flag" }
+];
+
+export function normalizePrepFlag(value) {
+  return PREP_FLAG_OPTIONS.some((option) => option.id === value) ? value : "P";
+}
+
+const PREP_FLAG_FACES = {
+  P: [{ id: "prep-p", type: "prep", code: "P" }],
+  I: [{ id: "i", type: "race", code: "i" }],
+  Z: [{ id: "z", type: "race", code: "z" }],
+  ZI: [{ id: "z", type: "race", code: "z" }, { id: "i", type: "race", code: "i" }],
+  BLACK: [{ id: "black", type: "race", code: "black" }]
 };
 
 export const PROCEDURES = [FIVE_MINUTE_PROCEDURE];
@@ -73,8 +105,12 @@ export function getActiveFlags(secondsToStart, options = {}) {
   const warningFlagType = options.warningFlagType ?? "class";
   const warningFlagNumber = normalizeFlagNumber(options.warningFlagNumber);
   const warningFlagId = options.warningFlagId ?? "class-a";
-  const prepFlag = options.prepFlag ?? "P";
+  const prepFlag = normalizePrepFlag(options.prepFlag ?? "P");
   const flags = [];
+  // Rækkefølge som i startskemaet: orange flag, derefter klasseflag/talstander, derefter klarsignal
+  if (options.attentionFlag !== false && secondsToStart <= 10 * 60 && secondsToStart > 0) {
+    flags.push({ id: "orange", type: "race", code: "orange", label: "", title: "Opmærksomhedssignal" });
+  }
   if (secondsToStart <= 5 * 60 && secondsToStart > 0) {
     flags.push(
       warningFlagType === "number"
@@ -83,7 +119,7 @@ export function getActiveFlags(secondsToStart, options = {}) {
     );
   }
   if (secondsToStart <= 4 * 60 && secondsToStart > 60) {
-    flags.push({ id: `prep-${prepFlag.toLowerCase()}`, type: "prep", code: prepFlag, label: "", title: "Klarsignal" });
+    flags.push(...PREP_FLAG_FACES[prepFlag].map((flag) => ({ ...flag, label: "", title: "Klarsignal" })));
   }
   return flags;
 }

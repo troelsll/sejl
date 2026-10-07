@@ -1072,3 +1072,14 @@ button.flag-card.removable {
   outline: 3px solid #ffcd00;
   outline-offset: 3px;
 }
+
+/* Z-flag: fire trekanter (gul øverst, sort venstre, blå højre, rød nederst) */
+.signal-z {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpolygon points='0,0 100,0 50,50' fill='%23ffcd00'/%3E%3Cpolygon points='0,0 50,50 0,100' fill='%23000'/%3E%3Cpolygon points='100,0 100,100 50,50' fill='%23155eef'/%3E%3Cpolygon points='0,100 50,50 100,100' fill='%23b42318'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+.prep-flag-select {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 700;
+}

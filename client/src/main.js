@@ -1,4 +1,4 @@
-import { formatDuration, getActiveFlags, getProcedure, getProcedureState } from "../../shared/startProcedure.mjs";
+import { ATTENTION_STEP, PREP_FLAG_OPTIONS, formatDuration, getActiveFlags, getProcedure, getProcedureState } from "../../shared/startProcedure.mjs";
 import {
   DEFAULT_CLASS_FLAGS,
   DS_DINGHY_CAT_CLASS_FLAGS,
@@ -360,6 +360,12 @@ function renderBoats() {
   `;
 }
 
+// Samler procedurens flag og manuelle signaler uden dubletter (fx orange flag)
+function withManualFlags(activeFlags, start) {
+  const ids = new Set(activeFlags.map((flag) => flag.id));
+  return [...activeFlags, ...getManualSignalFlags(start).filter((flag) => !ids.has(flag.id))];
+}
+
 let manualSignalQueue = Promise.resolve();
 
 function renderStartProcedure() {
@@ -371,7 +377,9 @@ function renderStartProcedure() {
     procedureType: procedure.id,
     warningFlagType: start?.warningFlagType,
     warningFlagNumber: start?.warningFlagNumber,
-    warningFlagId: start?.warningFlagId
+    warningFlagId: start?.warningFlagId,
+    prepFlag: start?.prepFlag,
+    attentionFlag: isCountdownRunning(start)
   });
   return `
     <section class="start-screen">
@@ -380,17 +388,22 @@ function renderStartProcedure() {
         <div class="time">${formatDuration(seconds)}</div>
         <h2>${escapeHtml(procedureState.currentPhase)}</h2>
         <p>Næste signal: ${procedureState.nextSignal ? `${procedureState.nextSignal.signalName} ved ${formatDuration(procedureState.nextSignal.offsetSeconds)}` : "Ingen"}</p>
-        ${renderSignalFlags([...activeFlags, ...getManualSignalFlags(start)])}
+        ${renderSignalFlags(withManualFlags(activeFlags, start))}
       </div>
       <div class="start-actions">
         <button class="primary huge" id="startCountdown">${isCountdownRunning(start) ? "Genstart 5 min" : "Start 5 min"}</button>
         <button id="setActualStart">Sæt faktisk start nu</button>
         <button id="soundTest">Lydtest</button>
         <button id="openStartDisplay">Åbn ekstern startskærm</button>
+        <label class="prep-flag-select">Klarsignal
+          <select id="prepFlagSelect">
+            ${PREP_FLAG_OPTIONS.map((option) => `<option value="${option.id}" ${option.id === (start?.prepFlag ?? "P") ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+          </select>
+        </label>
       </div>
       <div class="procedure-steps">
-        ${procedure.steps.map((step) => `
-          <div class="step ${step.offsetSeconds >= seconds ? "done" : ""}">
+        ${[ATTENTION_STEP, ...procedure.steps].map((step) => `
+          <div class="step ${(step === ATTENTION_STEP ? isCountdownRunning(start) : step.offsetSeconds >= seconds) ? "done" : ""}">
             <strong>${formatDuration(step.offsetSeconds)}</strong>
             <span>${escapeHtml(step.phase)}</span>
             <small>${[...(step.flagActions ?? []).map((action) => action.label), step.soundLabel].filter(Boolean).map(escapeHtml).join(" · ")}</small>
@@ -436,7 +449,7 @@ function renderManualSignals(start) {
 function renderSignalFlags(flags, emptyText = "Ingen flag oppe") {
   return `
     <div class="signal-flags ${flags.length ? "" : "empty"}">
-      ${flags.map((flag) => flag.type === "race" ? `
+      ${flags.map((flag) => flag.manual ? `
         <button type="button" class="flag-card removable" data-remove-manual-signal="${escapeHtml(flag.id)}" title="Klik for at tage flaget ned">
           ${renderFlagFace(flag)}
           <small>${escapeHtml(flag.title)}</small>
@@ -481,7 +494,7 @@ function getManualSignalFlags(start) {
   return (start?.manualSignalFlags ?? [])
     .map((id) => raceSignalById(id))
     .filter(Boolean)
-    .map((signal) => ({ type: "race", id: signal.id, code: signal.id, title: signal.name }));
+    .map((signal) => ({ type: "race", id: signal.id, code: signal.id, title: signal.name, manual: true }));
 }
 
 function renderConfiguredWarningFlag(start) {
@@ -886,6 +899,13 @@ function bindStartButtons() {
     if (!state.selectedStartId) return;
     window.open(`/display.html?startId=${encodeURIComponent(state.selectedStartId)}`, "_blank", "noopener,noreferrer");
   });
+  document.querySelector("#prepFlagSelect")?.addEventListener("change", async (event) => {
+    const start = selectedStart();
+    if (!start) return;
+    await api.patch(`/api/starts/${start.id}`, { prepFlag: event.target.value });
+    await loadAll();
+    render();
+  });
   document.querySelectorAll("[data-toggle-manual-signal], [data-remove-manual-signal]").forEach((button) => {
     button.addEventListener("click", () => {
       const signalId = button.dataset.toggleManualSignal ?? button.dataset.removeManualSignal;
@@ -895,7 +915,11 @@ function bindStartButtons() {
         if (!start) return;
         const activeSignals = new Set(start.manualSignalFlags ?? []);
         if (activeSignals.has(signalId)) activeSignals.delete(signalId);
-        else activeSignals.add(signalId);
+        else {
+          activeSignals.add(signalId);
+          // Opmærksomhedssignal: orange flag op giver 1 lydsignal
+          if (signalId === "orange") playSignal("single");
+        }
         await api.patch(`/api/starts/${start.id}`, { manualSignalFlags: [...activeSignals] });
         await loadAll();
         render();

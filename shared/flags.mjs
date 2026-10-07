@@ -55,6 +55,7 @@ export const RACE_SIGNAL_FLAGS = [
   { id: "general-recall", name: "Første lighedsstander - generel tilbagekaldelse", code: "1. lighedsstander", cssClass: "signal-general-recall" },
   { id: "individual-recall", name: "X - individuel tilbagekaldelse", code: "X", cssClass: "signal-x" },
   { id: "i", name: "I - rundingsregel 30.1", code: "I", cssClass: "signal-i" },
+  { id: "z", name: "Z - rundingsregel 30.2", code: "Z", cssClass: "signal-z" },
   { id: "black", name: "Sort flag - regel 30.3", code: "Sort", cssClass: "signal-black" },
   { id: "s", name: "S - afkortning af banen", code: "S", cssClass: "signal-s" },
   { id: "c", name: "C - ændring af næste ben", code: "C", cssClass: "signal-c" },

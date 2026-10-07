@@ -17,11 +17,25 @@ test("5-minutters procedure finder korrekt signal", () => {
 });
 
 test("5-minutters procedure viser korrekte aktive signalflag", () => {
-  assert.deepEqual(getActiveFlags(300, { warningFlagType: "class" }).map((flag) => flag.id), ["class-a"]);
-  assert.deepEqual(getActiveFlags(240, { warningFlagType: "class" }).map((flag) => flag.id), ["class-a", "prep-p"]);
-  assert.deepEqual(getActiveFlags(60, { warningFlagType: "class" }).map((flag) => flag.id), ["class-a"]);
-  assert.deepEqual(getActiveFlags(0, { warningFlagType: "class" }).map((flag) => flag.id), []);
-  assert.deepEqual(getActiveFlags(300, { warningFlagType: "number", warningFlagNumber: 3 }).map((flag) => flag.id), ["number-3"]);
+  const ids = (seconds, options = { warningFlagType: "class" }) => getActiveFlags(seconds, options).map((flag) => flag.id);
+  assert.deepEqual(ids(660), []);
+  assert.deepEqual(ids(600), ["orange"]);
+  assert.deepEqual(ids(300), ["orange", "class-a"]);
+  assert.deepEqual(ids(240), ["orange", "class-a", "prep-p"]);
+  assert.deepEqual(ids(60), ["orange", "class-a"]);
+  assert.deepEqual(ids(0), []);
+  assert.deepEqual(ids(300, { warningFlagType: "number", warningFlagNumber: 3 }), ["orange", "number-3"]);
+});
+
+test("klarsignalet kan være P, I, Z, Z og I eller sort flag", () => {
+  const prep = (prepFlag) => getActiveFlags(240, { warningFlagType: "class", prepFlag }).slice(2).map((flag) => flag.id);
+  assert.deepEqual(prep("P"), ["prep-p"]);
+  assert.deepEqual(prep("I"), ["i"]);
+  assert.deepEqual(prep("Z"), ["z"]);
+  assert.deepEqual(prep("ZI"), ["z", "i"]);
+  assert.deepEqual(prep("BLACK"), ["black"]);
+  assert.deepEqual(prep("ukendt"), ["prep-p"]);
+  assert.ok(["i", "z", "black", "orange"].every((id) => raceSignalById(id)));
 });
 
 test("dommersignaler indeholder de manuelle startside-signaler", () => {

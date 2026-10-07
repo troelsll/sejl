@@ -62,9 +62,11 @@ function render() {
         procedureType: procedure.id,
         warningFlagType: start.warningFlagType,
         warningFlagNumber: start.warningFlagNumber,
-        warningFlagId: start.warningFlagId
+        warningFlagId: start.warningFlagId,
+        prepFlag: start.prepFlag
       });
-  const manualFlags = getManualSignalFlags(start);
+  const activeIds = new Set(activeFlags.map((flag) => flag.id));
+  const manualFlags = getManualSignalFlags(start).filter((flag) => !activeIds.has(flag.id));
 
   app.innerHTML = `
     <main class="display-shell ${started ? "started" : ""}">
