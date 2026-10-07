@@ -182,7 +182,7 @@ export function seedData() {
 
   db.prepare(
     "INSERT INTO settings (id, signal_volume, signal_sound, party_mode_enabled, procedure_type, custom_warning_flags_json, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).run("default", 0.8, "electronic", 1, "five-minute", "[]", now.toISOString());
+  ).run("default", 0.8, "horn", 1, "five-minute", "[]", now.toISOString());
 
   logEvent({ eventId, type: "seeded", message: "Seed data oprettet", metadata: { boats: boats.length } });
 }
@@ -594,7 +594,7 @@ function mapSettings(row) {
   return {
     id: row.id,
     signalVolume: row.signal_volume,
-    signalSound: row.signal_sound ?? "electronic",
+    signalSound: row.signal_sound ?? "horn",
     partyModeEnabled: Boolean(row.party_mode_enabled ?? 1),
     procedureType: row.procedure_type,
     audioOutputId: row.audio_output_id,

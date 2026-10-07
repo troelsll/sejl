@@ -31,6 +31,8 @@ const state = {
 const app = document.querySelector("#app");
 
 const SIGNAL_SOUNDS = [
+  { id: "horn", label: "Signalhorn" },
+  { id: "file", label: "Egne lydfiler" },
   { id: "electronic", label: "Elektronisk" },
   { id: "foghorn", label: "Tågehorn" },
   { id: "bell", label: "Skibsklokke" }
@@ -634,7 +636,7 @@ function renderSettings() {
         <label>Signalvolumen <input name="signalVolume" type="range" min="0" max="1" step="0.05" value="${state.settings?.signalVolume ?? 0.8}"></label>
         <label>Signallyd
           <select name="signalSound">
-            ${SIGNAL_SOUNDS.map((sound) => `<option value="${sound.id}" ${sound.id === (state.settings?.signalSound ?? "electronic") ? "selected" : ""}>${sound.label}</option>`).join("")}
+            ${SIGNAL_SOUNDS.map((sound) => `<option value="${sound.id}" ${sound.id === (state.settings?.signalSound ?? "horn") ? "selected" : ""}>${sound.label}</option>`).join("")}
           </select>
         </label>
         <label>Procedure
@@ -1232,16 +1234,61 @@ function playSignal(pattern) {
   if (!AudioContext) return;
   const context = new AudioContext();
   const volume = state.settings?.signalVolume ?? 0.8;
-  const sound = state.settings?.signalSound ?? "electronic";
-  if (sound === "foghorn") playFoghorn(context, volume, pattern);
+  const sound = state.settings?.signalSound ?? "horn";
+  if (sound === "file") {
+    playSoundFile(context, volume, pattern).catch(() => playHorn(context, volume, pattern));
+  } else if (sound === "horn") playHorn(context, volume, pattern);
+  else if (sound === "foghorn") playFoghorn(context, volume, pattern);
   else if (sound === "bell") playBell(context, volume, pattern);
   else playElectronicSignal(context, volume, pattern);
-  setTimeout(() => context.close?.(), signalSeconds(pattern, { short: 0.8, single: 1.6, long: 3.5 }) * 1000 + 600);
+  setTimeout(() => context.close?.(), signalSeconds(pattern, { short: 0.8, single: 1.6, long: 3.5 }) * 1000 + 2000);
 }
 
 // Lydlængder: short = kort klik (fx målgang), single = "1 lydsignal", long = "1 langt lydsignal"
 function signalSeconds(pattern, lengths) {
   return lengths[pattern] ?? lengths.single;
+}
+
+// Signalhorn: tykt, messingagtigt horn (ca. 400 Hz). short = kort stød, single = "1 lydsignal" (ca. 1 s), long = "1 langt lydsignal" (ca. 3 s)
+function playHorn(context, volume, pattern) {
+  const duration = signalSeconds(pattern, { short: 0.3, single: 1, long: 3 });
+  const start = context.currentTime;
+  const master = context.createGain();
+  master.gain.setValueAtTime(0.001, start);
+  master.gain.exponentialRampToValueAtTime(Math.max(0.001, volume * 0.8), start + 0.04);
+  master.gain.setValueAtTime(Math.max(0.001, volume * 0.8), start + Math.max(0.05, duration - 0.12));
+  master.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  const filter = context.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 2200;
+  filter.connect(master).connect(context.destination);
+  [[392, "sawtooth", 0.5], [394.5, "sawtooth", 0.5], [784, "square", 0.12], [196, "triangle", 0.35]].forEach(([frequency, type, level]) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    gain.gain.value = level;
+    oscillator.connect(gain).connect(filter);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.05);
+  });
+}
+
+// Egne lydfiler: læg signal-short / signal-single / signal-long (.mp3, .wav eller .ogg) i client/assets/sounds/
+async function playSoundFile(context, volume, pattern) {
+  for (const extension of ["mp3", "wav", "ogg"]) {
+    const response = await fetch(`assets/sounds/signal-${pattern}.${extension}`);
+    if (!response.ok || !(response.headers.get("content-type") ?? "").match(/audio|ogg|mpeg|wav|octet/)) continue;
+    const buffer = await context.decodeAudioData(await response.arrayBuffer());
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    gain.gain.value = volume;
+    source.buffer = buffer;
+    source.connect(gain).connect(context.destination);
+    source.start();
+    return;
+  }
+  throw new Error("Ingen lydfil fundet");
 }
 
 function playElectronicSignal(context, volume, pattern) {
