@@ -378,7 +378,7 @@ function renderStartProcedure() {
         <div class="time">${formatDuration(seconds)}</div>
         <h2>${escapeHtml(procedureState.currentPhase)}</h2>
         <p>Næste signal: ${procedureState.nextSignal ? `${procedureState.nextSignal.signalName} ved ${formatDuration(procedureState.nextSignal.offsetSeconds)}` : "Ingen"}</p>
-        ${renderSignalFlags(activeFlags)}
+        ${renderSignalFlags([...activeFlags, ...getManualSignalFlags(start)])}
       </div>
       <div class="start-actions">
         <button class="primary huge" id="startCountdown">${isCountdownRunning(start) ? "Genstart 5 min" : "Start 5 min"}</button>
